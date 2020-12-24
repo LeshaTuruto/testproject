@@ -73,5 +73,4 @@ class ProductImportRulesChecker
     public function resetErrorMessage():void{
         $this->errorMessage="";
     }
-
 }
