@@ -7,7 +7,7 @@ namespace App\ProductImportRulesChecker;
 /**
  * This class check import rules to each product from csv file.
  */
-class ProductImportRulesChecker
+class ProductValidator
 {
 
     private string $errorMessage;
@@ -19,35 +19,31 @@ class ProductImportRulesChecker
         $this->errorMessage = "";
     }
 
-    public function check(array $product):bool
+    public function validate(array $product): void
     {
-        if($this->checkFirstRule($product) && $this->checkSecondRule($product) && $this->checkThirdRule($product)){
-            return true;
-        }
-        else{
-            return false;
-        }
+        $this->validateProductCost($product);
+        $this->validateProductStock($product);
     }
-    //first rule
-    private function checkFirstRule(array $product):bool
+    //product cost validation
+    private function validateProductCost(array $product): bool
     {
-        $answer=true;
+        $result=true;
         if($product[self::COST] < 5.0){
             $this->errorMessage.= "Product cost is less than 5 GBP"."\n";
-            $answer=false;
+            $result=false;
         }
-        if($product[self::STOCK]<10){
-            $this->errorMessage.= "Product stock is less than 10"."\n";
-            $answer = false;
-        }
-        return $answer;
-    }
-
-    //second rule
-    private function checkSecondRule(array $product):bool
-    {
         if($product[self::COST] > 1000.0){
             $this->errorMessage.= "Product cost is more than 1000 GBP"."\n";
+            $result = false;
+        }
+        return $result;
+    }
+
+    //sproduct stock validation
+    private function validateProductStock(array $product): bool
+    {
+        if($product[self::STOCK] < 10){
+            $this->errorMessage.= "Product stock is less than 10"."\n";
             return false;
         }
         return true;
@@ -61,7 +57,9 @@ class ProductImportRulesChecker
         return $this->errorMessage;
     }
     //Since we have many products, we need to reset Error message
-    public function resetErrorMessage():void{
+    public function resetErrorMessage(): void
+    {
         $this->errorMessage = "";
     }
+
 }

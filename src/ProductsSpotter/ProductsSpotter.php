@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\ProductsSpotter;
 
 
-use App\ProductImportRulesChecker\ProductImportRulesChecker;
+use App\ProductImportRulesChecker\ProductValidator;
 
 /**
  * This class spots products parameters;
@@ -22,14 +22,14 @@ class ProductsSpotter
     private const IS_DISCONTINUED = "Discontinued";
     private const CORRECT_ANSWER = "yes";
     private const PRODUCT_CODE = "Product Code";
-    private ProductImportRulesChecker $productRuleChecker;
+    private ProductValidator $productValidator;
     private array $errors;
     private array $products;
 
     public function __construct(array $products, array $errors)
     {
         $this->products = $products;
-        $this->productRuleChecker = new ProductImportRulesChecker();
+        $this->productValidator = new ProductValidator();
         $this->errors = $errors;
     }
 
@@ -41,18 +41,19 @@ class ProductsSpotter
         $spottedProducts = [];
         $i = 0;
         foreach ($this->products as $product){
-            if($this->productRuleChecker->check($product)){
+            $this->productValidator->validate($product);
+            if($this->productValidator->getErrorMessage() !== ""){
                 $spottedProducts[] = $product;
             }
             else{
                 if(isset($this->errors[$product[self::PRODUCT_CODE]])) {
-                    $this->errors[$product[self::PRODUCT_CODE]] .= $this->productRuleChecker->getErrorMessage();
+                    $this->errors[$product[self::PRODUCT_CODE]] .= $this->productValidator->getErrorMessage();
                 }
                 else{
-                    $this->errors[$product[self::PRODUCT_CODE]] = $this->productRuleChecker->getErrorMessage();
+                    $this->errors[$product[self::PRODUCT_CODE]] = $this->productValidator->getErrorMessage();
                 }
             }
-            $this->productRuleChecker->resetErrorMessage();
+            $this->productValidator->resetErrorMessage();
         }
         return $spottedProducts;
     }
