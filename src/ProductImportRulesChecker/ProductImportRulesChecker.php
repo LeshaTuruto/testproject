@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\ProductImportRulesChecker;
 
-
-use http\Exception\BadMethodCallException;
-
 /**
  * This class check import rules to each product from csv file.
  */
