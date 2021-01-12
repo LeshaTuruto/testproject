@@ -10,12 +10,12 @@ namespace App\FileChecker;
 
 class CsvFileChecker implements FileChecker
 {
-    private string $errorMessage="";
+    private string $errorMessage = "";
 
     public function checkFile(string $filename): bool
     {
         if(!file_exists($filename) || !is_readable($filename)){
-            $this->errorMessage="File read error";
+            $this->errorMessage = "File read error";
             return false;
         }
         return true;

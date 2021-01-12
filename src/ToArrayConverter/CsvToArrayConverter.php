@@ -19,8 +19,8 @@ class CsvToArrayConverter implements ToArrayConverter
 
     public function __construct()
     {
-        $this->fileChecker=new CsvFileChecker();
-        $this->convertErrors=[];
+        $this->fileChecker = new CsvFileChecker();
+        $this->convertErrors = [];
     }
 
     private function addError(string $productCode, string $errorMessage):void{
@@ -48,12 +48,12 @@ class CsvToArrayConverter implements ToArrayConverter
                     $header = $row;
                 }
                 else {
-                    if(count($row)==count($header)) {
+                    if(count($row) === count($header)) {
                         $convertedArray[] = array_combine($header, $row);
                     }
                     else{
-                        $productCode=$row[0];
-                        $this->addError($productCode,"Conversion error");
+                        $productCode = $row[0];
+                        $this->addError($productCode, "Conversion error");
                     }
                 }
             }
