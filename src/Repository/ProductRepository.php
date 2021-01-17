@@ -19,7 +19,7 @@ class ProductRepository extends ServiceEntityRepository
         parent::__construct($registry, Product::class);
     }
 
-    public function findOneByCode($value): ?Product
+    public function findOneByCode(string $value): ?Product
     {
         return $this->createQueryBuilder('t')
             ->andWhere('t.strproductcode = :val')
