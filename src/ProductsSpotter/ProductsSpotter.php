@@ -37,7 +37,7 @@ class ProductsSpotter
     {
         $this->spotProductsProductCode();
         $this->spotProductsParams();
-        $this->spotProductsThirdRule();
+        $this->processDiscountProducts();
         $spottedProducts = [];
         $i = 0;
         foreach ($this->products as $product){
@@ -46,12 +46,7 @@ class ProductsSpotter
                 $spottedProducts[] = $product;
             }
             else{
-                if(isset($this->errors[$product[self::PRODUCT_CODE]])) {
-                    $this->errors[$product[self::PRODUCT_CODE]] .= $this->productValidator->getErrorMessage();
-                }
-                else{
-                    $this->errors[$product[self::PRODUCT_CODE]] = $this->productValidator->getErrorMessage();
-                }
+                $this->addError($product[self::PRODUCT_CODE], $this->productValidator->getErrorMessage());
             }
             $this->productValidator->resetErrorMessage();
         }
@@ -63,8 +58,8 @@ class ProductsSpotter
     {
         foreach ($this->products as &$product){
 
-            $product[self::COST] = floatval($product[self::COST]);
-            $product[self::STOCK] = intval($product[self::STOCK]);
+            $product[self::COST] = (float) $product[self::COST];
+            $product[self::STOCK] = (int) $product[self::STOCK];
             if($product[self::IS_DISCONTINUED] !== self::CORRECT_ANSWER){
                 $product[self::IS_DISCONTINUED] = false;
             }
@@ -74,7 +69,7 @@ class ProductsSpotter
         }
     }
     //third rule
-    private function spotProductsThirdRule():void
+    private function processDiscountProducts():void
     {
         foreach ($this->products as &$product){
             if($product[self::IS_DISCONTINUED]){
@@ -100,7 +95,7 @@ class ProductsSpotter
         $spottedProducts = [];
         for($i = 0; $i < count($this->products); $i++){
             if($i < (count($this->products) - 1)) {
-                if ($this->products[$i][self::PRODUCT_CODE] === $this->products[$i + 1][self::PRODUCT_CODE]) {
+                if($this->products[$i][self::PRODUCT_CODE] === $this->products[$i + 1][self::PRODUCT_CODE]) {
 
                 } else {
                     $spottedProducts[] = $this->products[$i];
@@ -113,9 +108,16 @@ class ProductsSpotter
         $this->setProducts($spottedProducts);
     }
 
-    /**
-     * @return array
-     */
+    private function addError(string $productCode, string $errorMessage):void
+    {
+        if(isset($this->errors[$productCode])) {
+            $this->errors[$productCode] .= $this->productValidator->getErrorMessage();
+        }
+        else{
+            $this->errors[$productCode] = $this->productValidator->getErrorMessage();
+        }
+    }
+
     public function getErrors(): array
     {
         return $this->errors;
