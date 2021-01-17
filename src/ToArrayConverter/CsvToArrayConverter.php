@@ -37,36 +37,36 @@ class CsvToArrayConverter implements ToArrayConverter
     {
         $convertedArray=[];
         if(!$this->fileChecker->checkFile($filename)) {
-            echo $this->fileChecker->getErrorMessage();
             return $convertedArray;
         }
         $header=null;
-        if(($handle = fopen($filename, 'r')) !== false){
-            while (($row = fgetcsv($handle, self::ROW_LENGTH, $delimiter)) !== false)
-            {
-                if(!$header) {
-                    $header = $row;
-                }
-                else {
-                    if(count($row) === count($header)) {
-                        $convertedArray[] = array_combine($header, $row);
-                    }
-                    else{
-                        $productCode = $row[0];
-                        $this->addError($productCode, "Conversion error");
-                    }
-                }
-            }
-            fclose($handle);
+        $handle = fopen($filename, 'r');
+        if(!$handle){
+            return [];
         }
+        $header = fgetcsv($handle, self::ROW_LENGTH, $delimiter);
+        while (($row = fgetcsv($handle, self::ROW_LENGTH, $delimiter)) !== false)  {
+            if (!$this->validateNoFieldIsMissing($header, $row)) {
+                continue;
+            }
+            $convertedArray[] = array_combine($header, $row);
+        }
+        fclose($handle);
         return $convertedArray;
     }
 
-    /**
-     * @return array
-     */
     public function getConvertErrors(): array
     {
         return $this->convertErrors;
+    }
+
+    private function validateNoFieldIsMissing(array $header, array $row):bool
+    {
+        if(count($row) != count($header)){
+            $productCode=$row[0];
+            $this->addError($productCode,"Field is missing error");
+            return false;
+        }
+        return true;
     }
 }
