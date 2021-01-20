@@ -40,7 +40,7 @@ class ImportCsvToMysqlDatabaseCommand extends Command
     {
         $filename = $input->getArgument('filename');
         $mode = $input->getArgument('mode');
-        if($mode === 'test' || $mode ==='import') {
+        if($mode === 'test' || $mode === 'import') {
             $data = $this->csvToArrayConverter->convert($filename);
             $productSpotter = new ProductsSpotter($data, $this->csvToArrayConverter->getConvertErrors());
             $data = $productSpotter->spotProducts();

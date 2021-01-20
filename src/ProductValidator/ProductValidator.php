@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\ProductImportRulesChecker;
+namespace App\ProductValidator;
 
 /**
  * This class check import rules to each product from csv file.

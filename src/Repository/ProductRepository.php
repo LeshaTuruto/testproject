@@ -22,7 +22,7 @@ class ProductRepository extends ServiceEntityRepository
     public function findOneByCode(string $value): ?Product
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.strproductcode = :val')
+            ->andWhere('t.productCode = :val')
             ->setParameter('val', $value)
             ->getQuery()
             ->getOneOrNullResult()

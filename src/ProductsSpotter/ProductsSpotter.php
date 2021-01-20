@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\ProductsSpotter;
 
 
-use App\ProductImportRulesChecker\ProductValidator;
+use App\ProductValidator\ProductValidator;
 
 /**
  * This class spots products parameters;
@@ -42,7 +42,7 @@ class ProductsSpotter
         $i = 0;
         foreach ($this->products as $product){
             $this->productValidator->validate($product);
-            if($this->productValidator->getErrorMessage() !== ""){
+            if($this->productValidator->getErrorMessage() === ""){
                 $spottedProducts[] = $product;
             }
             else{
@@ -133,3 +133,4 @@ class ProductsSpotter
     }
 
 }
+

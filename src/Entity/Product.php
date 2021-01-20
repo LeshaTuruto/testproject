@@ -4,16 +4,26 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\ProductRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Product
  *
  * @ORM\Table(name="tblproductdata", uniqueConstraints={@ORM\UniqueConstraint(name="strProductCode", columns={"strProductCode"})})
- * @ORM\Entity(repositoryClass="ProducRepository")
+ * @ORM\Entity(repositoryClass="App\Repository\ProductRepository")
+ * @ORM\HasLifecycleCallbacks()
  */
 class Product
 {
+
+    private const DATE_DISCONTINUED = "dtmDiscontinued";
+    private const COST = "Cost in GBP";
+    private const STOCK = "Stock";
+    private const PRODUCT_CODE = "Product Code";
+    private const PRODUCT_NAME = "Product Name";
+    private const PRODUCT_DESCRIPTION = "Product Description";
+
     /**
      * @var int
      *
@@ -21,35 +31,35 @@ class Product
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    private $id;
+    private int $id;
 
     /**
      * @var string
      *
      * @ORM\Column(name="strProductName", type="string", length=50, nullable=false)
      */
-    private $productName;
+    private string $productName;
 
     /**
      * @var string
      *
      * @ORM\Column(name="strProductDesc", type="string", length=255, nullable=false)
      */
-    private $productDesc;
+    private string $productDesc;
 
     /**
      * @var string
      *
      * @ORM\Column(name="strProductCode", type="string", length=10, nullable=false)
      */
-    private $productCode;
+    private string $productCode;
 
     /**
      * @var \DateTime|null
      *
      * @ORM\Column(name="dtmAdded", type="datetime", nullable=true)
      */
-    private $dtmAdded;
+    private \DateTime $dtmAdded;
 
     /**
      * @var \DateTime|null
@@ -68,34 +78,41 @@ class Product
     /**
      * @var float
      *
-     * @ORM\Column(type="float")
+     * @ORM\Column(name="floatproductprice", type="float")
      */
-    private $productPrice;
+    private float $productPrice;
 
     /**
      * @var int
      *
-     * @ORM\Column(type="integer")
+     * @ORM\Column(name="intproductstock", type="integer")
      */
-    private $productStock;
+    private int $productStock;
 
-    public function __construct(string $productName, string $productDesc, string $productCode, \DateTimeInterface $dtmAdded,
-                                \DateTimeInterface $dateDiscontinued, \DateTimeInterface $stmTimeStamp, float $productPrice,
-                                int $productStock)
+    public function __construct()
     {
-        $this->productName = $productName;
-        $this->productDesc = $productDesc;
-        $this->productCode = $productCode;
-        $this->dtmAdded = $dtmAdded;
-        $this->dateDiscontinued = $dateDiscontinued;
-        $this->stmTimeStamp = $stmTimeStamp;
-        $this->productPrice = $productPrice;
-        $this->productStock = $productStock;
+    }
+
+    protected function fillProduct(array $productData): void
+    {
+        $this->productName = $productData[self::PRODUCT_NAME];
+        $this->productDesc = $productData[self::PRODUCT_DESCRIPTION];
+        $this->productCode = $productData[self::PRODUCT_CODE];
+        $this->dateDiscontinued = $productData[self::DATE_DISCONTINUED];
+        $this->productPrice = $productData[self::COST];
+        $this->productStock = $productData[self::STOCK];
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public static function withProductData(array $productData): Product
+    {
+        $product = new self();
+        $product->fillProduct($productData);
+        return $product;
     }
 
     public function getProductName(): ?string
@@ -131,6 +148,14 @@ class Product
         return $this->dtmAdded;
     }
 
+    /**
+     * @ORM\PrePersist()
+     */
+    public function setDtmAddedValue(): void
+    {
+        $this->dtmAdded = new \DateTime();
+    }
+
     public function getDateDiscontinued(): ?\DateTimeInterface
     {
         return $this->dateDiscontinued;
@@ -153,6 +178,14 @@ class Product
         $this->stmTimeStamp = $stmTimeStamp;
 
         return $this;
+    }
+
+    /**
+     * @ORM\PrePersist()
+     */
+    public function setStmTimeStampInitial(): void
+    {
+        $this->stmTimeStamp = new \DateTime();
     }
 
     public function getProductPrice(): ?float
@@ -179,5 +212,18 @@ class Product
         return $this;
     }
 
+    public function setProductCode(string $productCode): self
+    {
+        $this->productCode = $productCode;
+
+        return $this;
+    }
+
+    public function setDtmAdded(?\DateTimeInterface $dtmAdded): self
+    {
+        $this->dtmAdded = $dtmAdded;
+
+        return $this;
+    }
 
 }

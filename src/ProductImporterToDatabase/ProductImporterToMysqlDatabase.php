@@ -20,9 +20,9 @@ class ProductImporterToMysqlDatabase implements ProductImporterToDatabase
     private const PRODUCT_CODE = "Product Code";
     private const PRODUCT_NAME = "Product Name";
     private const PRODUCT_DESCRIPTION = "Product Description";
-    private array $errormessage;
     private EntityManagerInterface $em;
     private ProductRepository $productRepository;
+    private bool $isFounded = false;
 
     public function __construct(EntityManagerInterface $em, ProductRepository $productRepository)
     {
@@ -33,16 +33,9 @@ class ProductImporterToMysqlDatabase implements ProductImporterToDatabase
     public function import(array $products): bool
     {
         foreach ($products as $product) {
-            //If the product is not in the database, we create new product.
-            if(!$this->isImported($product)){
-                $dateAdded = new \DateTime();
-                $InsertingProduct = new Product($product[self::PRODUCT_NAME], $product[self::PRODUCT_DESCRIPTION],
-                    $product[self::PRODUCT_CODE], $dateAdded, $product[self::DATE_DISCONTINUED], $dateAdded, $product[self::COST],
-                $product[self::STOCK]);
-            }
-            else{
+            $InsertingProduct = $this->getOrCreate($product);
+            if($this->isFounded){
                 //If the product is in the database, we just edit our product according to the information from the converted array.
-                $InsertingProduct = $this->productRepository->findOneByCode($product[self::PRODUCT_CODE]);
                 $InsertingProduct->setProductName($product[self::PRODUCT_NAME]);
                 $InsertingProduct->setProductDesc($product[self::PRODUCT_DESCRIPTION]);
                 $InsertingProduct->setProductStock($product[self::STOCK]);
@@ -56,16 +49,16 @@ class ProductImporterToMysqlDatabase implements ProductImporterToDatabase
         $this->em->flush();
         return true;
     }
-    public function isImported(array $product):bool{
 
-
-        //This function checks if the product is in the database.
-
-        if(($findedProduct = $this->productRepository->findOneByCode($product[self::PRODUCT_CODE])) !== null){
-            return true;
+    private function getOrCreate(array $productData): Product
+    {
+        $product = $this->productRepository->findOneByCode($productData[self::PRODUCT_CODE]);
+        if($product === null){
+            $product = Product::withProductData($productData);
         }
         else{
-            return false;
+            $this->isFounded = true;
         }
+        return $product;
     }
 }
