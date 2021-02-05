@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\ProductsSpotter;
 
 
-use App\ProductImportRulesChecker\ProductImportRulesChecker;
+use App\ProductValidator\ProductValidator;
 
 /**
  * This class spots products parameters;
@@ -16,43 +16,39 @@ use App\ProductImportRulesChecker\ProductImportRulesChecker;
 
 class ProductsSpotter
 {
-    private const DATE_DISCONTINUED="dtmDiscontinued";
-    private const COST="Cost in GBP";
-    private const STOCK="Stock";
-    private const IS_DISCONTINUED="Discontinued";
-    private const CORRECT_ANSWER="yes";
-    private const PRODUCT_CODE="Product Code";
-    private ProductImportRulesChecker $productRuleChecker;
+    private const DATE_DISCONTINUED = "dtmDiscontinued";
+    private const COST = "Cost in GBP";
+    private const STOCK = "Stock";
+    private const IS_DISCONTINUED = "Discontinued";
+    private const CORRECT_ANSWER = "yes";
+    private const PRODUCT_CODE = "Product Code";
+    private ProductValidator $productValidator;
     private array $errors;
     private array $products;
 
-    public function __construct(array $products,array $errors)
+    public function __construct(array $products, array $errors)
     {
-        $this->products=$products;
-        $this->productRuleChecker=new ProductImportRulesChecker();
-        $this->errors=$errors;
+        $this->products = $products;
+        $this->productValidator = new ProductValidator();
+        $this->errors = $errors;
     }
 
     public function spotProducts():array
     {
         $this->spotProductsProductCode();
         $this->spotProductsParams();
-        $this->spotProductsThirdRule();
-        $spottedProducts=[];
-        $i=0;
+        $this->processDiscountProducts();
+        $spottedProducts = [];
+        $i = 0;
         foreach ($this->products as $product){
-            if($this->productRuleChecker->check($product)){
-                $spottedProducts[]=$product;
+            $this->productValidator->validate($product);
+            if($this->productValidator->getErrorMessage() === ""){
+                $spottedProducts[] = $product;
             }
             else{
-                if(isset($this->errors[$product[self::PRODUCT_CODE]])) {
-                    $this->errors[$product[self::PRODUCT_CODE]] .= $this->productRuleChecker->getErrorMessage();
-                }
-                else{
-                    $this->errors[$product[self::PRODUCT_CODE]] = $this->productRuleChecker->getErrorMessage();
-                }
+                $this->addError($product[self::PRODUCT_CODE], $this->productValidator->getErrorMessage());
             }
-            $this->productRuleChecker->resetErrorMessage();
+            $this->productValidator->resetErrorMessage();
         }
         return $spottedProducts;
     }
@@ -62,25 +58,25 @@ class ProductsSpotter
     {
         foreach ($this->products as &$product){
 
-            $product[self::COST]=floatval($product[self::COST]);
-            $product[self::STOCK]=intval($product[self::STOCK]);
-            if(strcmp($product[self::IS_DISCONTINUED],self::CORRECT_ANSWER)!==0){
-                $product[self::IS_DISCONTINUED]=false;
+            $product[self::COST] = (float) $product[self::COST];
+            $product[self::STOCK] = (int) $product[self::STOCK];
+            if($product[self::IS_DISCONTINUED] !== self::CORRECT_ANSWER){
+                $product[self::IS_DISCONTINUED] = false;
             }
             else{
-                $product[self::IS_DISCONTINUED]=true;
+                $product[self::IS_DISCONTINUED] = true;
             }
         }
     }
     //third rule
-    private function spotProductsThirdRule():void
+    private function processDiscountProducts():void
     {
         foreach ($this->products as &$product){
             if($product[self::IS_DISCONTINUED]){
-                $product[self::DATE_DISCONTINUED]=new \DateTime();
+                $product[self::DATE_DISCONTINUED] = new \DateTime();
             }
             else{
-                $product[self::DATE_DISCONTINUED]=null;
+                $product[self::DATE_DISCONTINUED] = null;
             }
         }
     }
@@ -96,10 +92,10 @@ class ProductsSpotter
     //remove products with repeatable code.
     private function spotProductsProductCode():void
     {
-        $spottedProducts=[];
-        for($i=0;$i<count($this->products);$i++){
-            if($i<(count($this->products)-1)) {
-                if (strcmp($this->products[$i][self::PRODUCT_CODE], $this->products[$i + 1][self::PRODUCT_CODE]) === 0) {
+        $spottedProducts = [];
+        for($i = 0; $i < count($this->products); $i++){
+            if($i < (count($this->products) - 1)) {
+                if($this->products[$i][self::PRODUCT_CODE] === $this->products[$i + 1][self::PRODUCT_CODE]) {
 
                 } else {
                     $spottedProducts[] = $this->products[$i];
@@ -112,9 +108,16 @@ class ProductsSpotter
         $this->setProducts($spottedProducts);
     }
 
-    /**
-     * @return array
-     */
+    private function addError(string $productCode, string $errorMessage):void
+    {
+        if(isset($this->errors[$productCode])) {
+            $this->errors[$productCode] .= $this->productValidator->getErrorMessage();
+        }
+        else{
+            $this->errors[$productCode] = $this->productValidator->getErrorMessage();
+        }
+    }
+
     public function getErrors(): array
     {
         return $this->errors;
@@ -122,11 +125,12 @@ class ProductsSpotter
 
     // convert Errors to readable string.
     public function getStringErrors():string{
-        $stringErrors="";
+        $stringErrors = "";
         foreach ($this->errors as $key => $error){
-            $stringErrors.="[".$key."]: ".$error;
+            $stringErrors .= "[".$key."]: ".$error;
         }
         return $stringErrors;
     }
 
 }
+
